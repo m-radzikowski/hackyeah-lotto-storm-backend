@@ -7,9 +7,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class Coordinates {
-    private Double lng;
-    private Double lat;
+@AllArgsConstructor
+public class CommandDto {
+    private Long id;
+    private Type commandType;
+    public enum Type {
+        CREATE,
+        REMOVE
+    }
 }
