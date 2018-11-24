@@ -2,6 +2,7 @@ package friend;
 
 import push.PushService;
 import repository.PlayerRepository;
+import wallet.WalletBean;
 
 import javax.ejb.Singleton;
 import javax.inject.Inject;
@@ -16,6 +17,9 @@ public class FriendNotifications {
 	@Inject
 	private PushService pushService;
 
+	@Inject
+	private WalletBean wallet;
+
 	/**
 	 * Map of notification RECEIVERS to SENDERS.
 	 */
@@ -29,9 +33,8 @@ public class FriendNotifications {
 	public void benefitFriendIfAny(long playerId) {
 		Optional.ofNullable(notifications.remove(playerId))
 			.ifPresent(friends -> friends.forEach(friendId -> {
-				// TODO Add 1 PLN to wallet
-
 				playerRepository.findById(friendId).ifPresent(friend -> {
+					wallet.addValue(friend.getId(), 1);
 					pushService.sendNotification(friend.getPushToken(), "Otrzymujesz 1 żeton", friend.getUsername() + " zagrał dzięki Twojemu zaproszeniu, otrzymujesz darmowy żeton!");
 				});
 			}));
