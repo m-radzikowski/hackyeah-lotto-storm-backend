@@ -1,13 +1,24 @@
 package friend;
 
+import push.PushService;
+import repository.PlayerRepository;
+import wallet.WalletBean;
+
 import javax.ejb.Singleton;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.inject.Inject;
+import java.util.*;
 
 @Singleton
 public class FriendNotifications {
+
+	@Inject
+	private PlayerRepository playerRepository;
+
+	@Inject
+	private PushService pushService;
+
+	@Inject
+	private WalletBean wallet;
 
 	/**
 	 * Map of notification RECEIVERS to SENDERS.
@@ -17,5 +28,15 @@ public class FriendNotifications {
 	public void addNotification(long fromId, long toId) {
 		this.notifications.putIfAbsent(toId, new ArrayList<>());
 		this.notifications.get(toId).add(fromId);
+	}
+
+	public void benefitFriendIfAny(long playerId) {
+		Optional.ofNullable(notifications.remove(playerId))
+			.ifPresent(friends -> friends.forEach(friendId -> {
+				playerRepository.findById(friendId).ifPresent(friend -> {
+					wallet.addValue(friend.getId(), 1);
+					pushService.sendNotification(friend.getPushToken(), "Otrzymujesz 1 żeton", friend.getUsername() + " zagrał dzięki Twojemu zaproszeniu, otrzymujesz darmowy żeton!");
+				});
+			}));
 	}
 }

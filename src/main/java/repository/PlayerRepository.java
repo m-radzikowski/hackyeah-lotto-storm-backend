@@ -10,5 +10,7 @@ import java.util.Optional;
 @Repository
 public interface PlayerRepository extends EntityRepository<Player, Long> {
 
+	Optional<Player> findById(Long id);
+
 	Optional<Player> findByUsername(String username);
 }
