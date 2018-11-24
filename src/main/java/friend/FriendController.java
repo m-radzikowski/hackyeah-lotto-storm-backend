@@ -1,6 +1,7 @@
 package friend;
 
 import entity.Player;
+import push.PushService;
 import repository.PlayerRepository;
 
 import javax.ejb.Stateless;
@@ -17,6 +18,9 @@ public class FriendController {
 	private PlayerRepository playerRepository;
 
 	@Inject
+	private PushService pushService;
+
+	@Inject
 	private FriendNotifications friendNotifications;
 
 	@POST
@@ -31,7 +35,11 @@ public class FriendController {
 	@POST
 	@Path("/notify")
 	public void sendNotification(NotifyRequestDto dto) {
-		// TODO Send notify
+		Player sender = playerRepository.findById(dto.getUserId()).orElseThrow(NotFoundException::new);
+		Player friend = playerRepository.findById(dto.getFriendId()).orElseThrow(NotFoundException::new);
+
+		pushService.sendNotification(friend.getPushToken(), sender.getUsername(), dto.getText());
+
 		friendNotifications.addNotification(dto.getUserId(), dto.getFriendId());
 	}
 }

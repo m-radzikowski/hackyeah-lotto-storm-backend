@@ -1,94 +1,93 @@
 package push;
 
-import javax.ejb.EJB;
+import com.fasterxml.jackson.annotation.JsonRootName;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.ejb.Stateless;
-import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @Stateless
 public class PushService {
 
-//	private static final String FCM_API = "https://fcm.googleapis.com/v1/projects/expo-xxi/messages:send";
-//
-//	private ParticipantRepository participantRepository;
-//
-//	@Inject
-//	public PushService(ParticipantRepository participantRepository) {
-//		this.participantRepository = participantRepository;
-//	}
-//
-//	public void sendNotificationParticipants(Iterable<Participant> participants, String message) {
-//		participants.forEach(participant -> {
-//			if (participant.getToken() != null && !participant.getToken().trim().isEmpty()) {
-//				try {
-//					Notification notification = new Notification("Expo", message);
-//					Push push = new Push(participant.getToken(), notification);
-//					String response = sendNotification(push);
-//
-//					if (response != null) {
-//						System.out.println("Sent push to Firebase with response: " + response);
-//					}
-//				} catch (JsonProcessingException e) {
-//					System.out.println(e.toString());
-//				} catch (HttpClientErrorException e) {
-//					if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-//						System.out.println("Participant token not found on firebase - updating participant.");
-//
-//						participant.setToken(null);
-//						participantRepository.save(participant);
-//					} else {
-//						System.out.println(e.toString());
-//					}
-//				}
-//			} else {
-//				System.out.println("Participant " + participant.getFirstName() + " " + participant.getLastName() + " has no registered device.");
-//			}
-//		});
-//	}
-//
-//	public String sendNotification(Push push) throws JsonProcessingException, HttpClientErrorException {
-//		String response = null;
-//
-//		ObjectMapper objectMapper = new ObjectMapper();
-//		objectMapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
-//		String json = objectMapper.writeValueAsString(push);
-//
-//		HttpEntity<String> request = new HttpEntity<>(json);
-//		try {
-//			CompletableFuture<String> pushNotification = this.send(request);
-//			CompletableFuture.allOf(pushNotification).join();
-//
-//			response = pushNotification.get();
-//		} catch (InterruptedException | ExecutionException | IOException e) {
-//			e.printStackTrace();
-//		}
-//		return response;
-//	}
-//
-//	@Async
-//	CompletableFuture<String> send(HttpEntity<String> entity) throws IOException, HttpClientErrorException {
-//		RestTemplate restTemplate = new RestTemplate();
-//
-//		InputStream stream = new ClassPathResource("expo-xxi-firebase.json").getInputStream();
-//		GoogleCredential googleCred = GoogleCredential.fromStream(stream);
-//		GoogleCredential scoped = googleCred.createScoped(
-//			Collections.singletonList(
-//				"https://www.googleapis.com/auth/firebase.messaging"
-//			)
-//		);
-//		scoped.refreshToken();
-//
-//		ArrayList<ClientHttpRequestInterceptor> interceptors = new ArrayList<>();
-//		interceptors.add(new HeaderRequestInterceptor("Authorization", "Bearer " + scoped.getAccessToken()));
-//		interceptors.add(new HeaderRequestInterceptor("Content-Type", "application/json"));
-//		restTemplate.setInterceptors(interceptors);
-//
-//		String firebaseResponse = restTemplate.postForObject(FCM_API, entity, String.class);
-//		return CompletableFuture.completedFuture(firebaseResponse);
-//	}
+	private static final String FCM_API = "https://fcm.googleapis.com/v1/projects/organic-zephyr-223511/messages:send";
+
+	private final Client client = ClientBuilder.newClient();
+
+	public void sendNotification(String pushToken, String inviterUsername, String text) {
+		Notification notification = new Notification(inviterUsername + " zaprasza Cię do gry!", text);
+		Message message = new Message(pushToken, notification);
+		try {
+			send(new Push(message));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void send(Push push) throws IOException {
+		String accessToken = obtainGoogleCredential().getAccessToken();
+
+		try {
+			String result = client.target(FCM_API)
+				.request(MediaType.APPLICATION_JSON)
+				.header("Authorization", "Bearer " + accessToken)
+				.post(Entity.json(push), String.class);
+
+			System.out.println("FCM push result: " + result);
+		} catch (BadRequestException e) {
+			System.err.println("Failed to send push notification: " + e.getResponse().readEntity(String.class));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private GoogleCredential obtainGoogleCredential() throws IOException {
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		InputStream authFile = classLoader.getResourceAsStream("firebase.json");
+		GoogleCredential credential = GoogleCredential.fromStream(authFile);
+		GoogleCredential scoped = credential.createScoped(
+			Collections.singletonList(
+				"https://www.googleapis.com/auth/firebase.messaging"
+			)
+		);
+		scoped.refreshToken();
+		return scoped;
+	}
+
+	@Setter
+	@Getter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	public class Push {
+		private Message message;
+	}
+
+	@Setter
+	@Getter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@JsonRootName(value = "message")
+	public class Message {
+		private String token;
+		private Notification notification;
+	}
+
+	@Getter
+	@Setter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	private static class Notification {
+		private String title;
+		private String body;
+	}
 }

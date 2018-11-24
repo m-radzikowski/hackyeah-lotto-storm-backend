@@ -11,4 +11,5 @@ public class NotifyRequestDto {
 
 	private Long userId;
 	private Long friendId;
+	private String text;
 }
