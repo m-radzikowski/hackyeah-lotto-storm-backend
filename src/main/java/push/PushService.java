@@ -24,8 +24,8 @@ public class PushService {
 
 	private final Client client = ClientBuilder.newClient();
 
-	public void sendNotification(String pushToken, String inviterUsername, String text) {
-		Notification notification = new Notification(inviterUsername + " zaprasza Cię do gry!", text);
+	public void sendNotification(String pushToken, String title, String body) {
+		Notification notification = new Notification(title, body);
 		Message message = new Message(pushToken, notification);
 		try {
 			send(new Push(message));

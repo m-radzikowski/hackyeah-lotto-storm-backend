@@ -38,7 +38,7 @@ public class FriendController {
 		Player sender = playerRepository.findById(dto.getUserId()).orElseThrow(NotFoundException::new);
 		Player friend = playerRepository.findById(dto.getFriendId()).orElseThrow(NotFoundException::new);
 
-		pushService.sendNotification(friend.getPushToken(), sender.getUsername(), dto.getText());
+		pushService.sendNotification(friend.getPushToken(), sender.getUsername() + " zaprasza Cię do gry!", dto.getText());
 
 		friendNotifications.addNotification(dto.getUserId(), dto.getFriendId());
 	}
