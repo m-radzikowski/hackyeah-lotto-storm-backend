@@ -9,10 +9,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class StormDto {
-    private String id;
+public class LotteryTicketDto {
+    private Long userId;
     private Double lng;
     private Double lat;
-    private Integer max;
-    private Integer current = 0;
 }

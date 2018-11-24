@@ -10,7 +10,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommandDto {
-    private Long id;
+    private String id;
     private Type commandType;
     public enum Type {
         CREATE,
