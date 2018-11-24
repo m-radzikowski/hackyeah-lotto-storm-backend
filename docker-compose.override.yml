@@ -15,7 +15,7 @@ services:
       - '2306:80'
     environment:
       HOST: db
-      SCHEMA: navi
+      SCHEMA: lotto
       USER: root
       PASSWORD: password
     volumes:

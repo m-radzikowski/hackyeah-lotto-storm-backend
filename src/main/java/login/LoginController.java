@@ -1,7 +1,10 @@
 package login;
 
+import entity.Player;
+import repository.PlayerRepository;
+
 import javax.ejb.Stateless;
-import javax.ws.rs.GET;
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -9,14 +12,23 @@ import javax.ws.rs.Path;
 @Path("/login")
 public class LoginController {
 
-	@GET
-	public String hello() {
-		return "Hello LOTTO!";
-	}
+	@Inject
+	private PlayerRepository playerRepository;
 
 	@POST
 	public LoginResponseDto login(LoginRequestDto dto) {
-		System.out.println("Login user: " + dto.getUsername());
-		return new LoginResponseDto(1);
+		Player player = playerRepository.findByUsername(dto.getUsername())
+			.orElseGet(() -> {
+				Player p = new Player();
+				p.setUsername(dto.getUsername());
+				p.setPushToken(dto.getPushToken());
+				return playerRepository.saveAndFlushAndRefresh(p);
+			});
+
+		if (!player.getPushToken().equals(dto.getPushToken())) {
+			player.setPushToken(dto.getPushToken());
+		}
+
+		return new LoginResponseDto(player.getId());
 	}
 }

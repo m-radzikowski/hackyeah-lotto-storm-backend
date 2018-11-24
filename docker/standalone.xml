@@ -146,8 +146,8 @@
 		<subsystem xmlns="urn:jboss:domain:bean-validation:1.0"/>
 		<subsystem xmlns="urn:jboss:domain:datasources:4.0">
 			<datasources>
-				<datasource jta="true" jndi-name="java:/jdbc/Navi" pool-name="Navi" enabled="true" use-ccm="true">
-					<connection-url>jdbc:mysql://${app.db.host}:3306/Navi</connection-url>
+				<datasource jta="true" jndi-name="java:/jdbc/Lotto" pool-name="Lotto" enabled="true" use-ccm="true">
+					<connection-url>jdbc:mysql://${app.db.host}:3306/lotto</connection-url>
 					<driver>mariadb</driver>
 					<security>
 						<user-name>${app.db.user}</user-name>

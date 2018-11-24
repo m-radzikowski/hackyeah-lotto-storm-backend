@@ -11,5 +11,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class LoginResponseDto {
 
-	private int id;
+	private Long id;
 }

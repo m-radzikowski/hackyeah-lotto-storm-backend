@@ -5,7 +5,7 @@ services:
     ports:
       - '3306:3306'
     environment:
-      MYSQL_DATABASE: navi
+      MYSQL_DATABASE: lotto
       MYSQL_ROOT_PASSWORD: password
       TZ: Europe/Warsaw
 
