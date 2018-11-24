@@ -13,4 +13,5 @@ public class StormDto {
     private Long id;
     private Double lng;
     private Double lat;
+    private Integer value;
 }
