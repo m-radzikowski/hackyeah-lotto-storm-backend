@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
 
 @Stateless
 @Path("/friend")
@@ -34,12 +35,14 @@ public class FriendController {
 
 	@POST
 	@Path("/notify")
-	public void sendNotification(NotifyRequestDto dto) {
+	public Response sendNotification(NotifyRequestDto dto) {
 		Player sender = playerRepository.findById(dto.getUserId()).orElseThrow(NotFoundException::new);
 		Player friend = playerRepository.findById(dto.getFriendId()).orElseThrow(NotFoundException::new);
 
 		pushService.sendNotification(friend.getPushToken(), sender.getUsername() + " zaprasza Cię do gry!", dto.getText());
 
 		friendNotifications.addNotification(dto.getUserId(), dto.getFriendId());
+
+		return Response.ok().build();
 	}
 }

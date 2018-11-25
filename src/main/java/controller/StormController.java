@@ -21,7 +21,8 @@ public class StormController {
 		for (int i = 0; i < count; i++) {
 			StormDto storm = new StormDto();
 			storm.setId(UUID.randomUUID().toString());
-			storm.setMax(ThreadLocalRandom.current().nextInt(5, 10 + 1));
+			storm.setMax(ThreadLocalRandom.current().nextInt(50, 1000 + 1) * 2);
+			storm.setCurrent(storm.getMax() - ThreadLocalRandom.current().nextInt(3, 6 + 1));
 			allStorms.put(storm.getId(), storm);
 			storms.add(storm);
 		}
@@ -41,8 +42,16 @@ public class StormController {
 		}
 	}
 
+	public Collection<StormDto> getAll() {
+		return allStorms.values();
+	}
+
 	public void remove(String id) {
 		allStorms.remove(id);
+	}
+
+	public void removeAll() {
+		allStorms.clear();
 	}
 
 	public StormDto find(Double lat, Double lng) {

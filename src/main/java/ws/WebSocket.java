@@ -56,6 +56,7 @@ public class WebSocket {
 			clientSessions.remove(session);
 		} else if (session.getQueryString().equals("server")) {
 			serverSessions.remove(session);
+			stormController.removeAll();
 		} else if (session.getQueryString().equals("web")) {
 			webSessions.remove(session);
 		}
@@ -79,7 +80,7 @@ public class WebSocket {
 					clientSessions.forEach(clientSessions -> {
 						clientSessions.getAsyncRemote().sendText(winnerMsg);
 					});
-					webSessions.forEach(webSession -> webSession.getAsyncRemote().sendText(message));
+					webSessions.forEach(webSession -> webSession.getAsyncRemote().sendText(winnerMsg));
 
 					List<StormDto> storms = stormController.generate(1);
 					List<CommandDto> commands = storms.stream().map(storm -> new CommandDto(storm.getId(), CommandDto.Type.CREATE)).collect(Collectors.toList());
@@ -107,7 +108,7 @@ public class WebSocket {
 
 			sessions.forEach(clientSession -> {
 				try {
-					clientSession.getAsyncRemote().sendText(objectMapper.writeValueAsString(storms));
+					clientSession.getAsyncRemote().sendText(objectMapper.writeValueAsString(stormController.getAll()));
 				} catch (JsonProcessingException e) {
 					e.printStackTrace();
 				}

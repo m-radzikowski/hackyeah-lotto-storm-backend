@@ -35,7 +35,7 @@ public class FriendNotifications {
 			.ifPresent(friends -> friends.forEach(friendId -> {
 				playerRepository.findById(friendId).ifPresent(friend -> {
 					wallet.addValue(friend.getId(), 1);
-					pushService.sendNotification(friend.getPushToken(), "Otrzymujesz 1 żeton", friend.getUsername() + " zagrał dzięki Twojemu zaproszeniu, otrzymujesz darmowy żeton!");
+					pushService.sendNotification(friend.getPushToken(), "Otrzymujesz DARMOWY kupon", friend.getUsername() + " zagrał dzięki Twojemu zaproszeniu, otrzymujesz 1 darmowy kupon!");
 				});
 			}));
 	}
