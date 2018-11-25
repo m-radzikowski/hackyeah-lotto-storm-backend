@@ -9,6 +9,7 @@ import model.dto.StormDto;
 
 import javax.ejb.Singleton;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Singleton
 public class StormController {
@@ -20,8 +21,7 @@ public class StormController {
 		for (int i = 0; i < count; i++) {
 			StormDto storm = new StormDto();
 			storm.setId(UUID.randomUUID().toString());
-//            storm.setMax(ThreadLocalRandom.current().nextInt(20, 1000 + 1));
-			storm.setMax(3);
+			storm.setMax(ThreadLocalRandom.current().nextInt(5, 10 + 1));
 			allStorms.put(storm.getId(), storm);
 			storms.add(storm);
 		}

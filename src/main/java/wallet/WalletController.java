@@ -20,8 +20,8 @@ public class WalletController {
 	}
 
 	@GET
-	@Path("/{id}/add")
-	public WalletStateDto addValue(@PathParam("id") long playerId) {
-		return new WalletStateDto(wallet.addValue(playerId, 20));
+	@Path("/{id}/add/{amount}")
+	public WalletStateDto addValue(@PathParam("id") long playerId, @PathParam("amount") long amount) {
+		return new WalletStateDto(wallet.addValue(playerId, amount));
 	}
 }

@@ -75,7 +75,12 @@ public class WebSocket {
 				stormDto.setCurrent(stormDto.getCurrent() + 1);
 				stormController.updateCurrent(stormDto);
 				if (stormDto.getCurrent().equals(stormDto.getMax())) {
-					session.getAsyncRemote().sendText(objectMapper.writeValueAsString(new WinnerDto(lotteryTicketDto, stormDto)));
+					String winnerMsg = objectMapper.writeValueAsString(new WinnerDto(lotteryTicketDto, stormDto));
+					clientSessions.forEach(clientSessions -> {
+						clientSessions.getAsyncRemote().sendText(winnerMsg);
+					});
+					webSessions.forEach(webSession -> webSession.getAsyncRemote().sendText(message));
+
 					List<StormDto> storms = stormController.generate(1);
 					List<CommandDto> commands = storms.stream().map(storm -> new CommandDto(storm.getId(), CommandDto.Type.CREATE)).collect(Collectors.toList());
 					commands.add(new CommandDto(stormDto.getId(), CommandDto.Type.REMOVE));
@@ -90,13 +95,17 @@ public class WebSocket {
 				}
 				walletBean.spend1(lotteryTicketDto.getUserId());
 				friendNotifications.benefitFriendIfAny(lotteryTicketDto.getUserId());
-				webSessions.forEach(webSession -> webSession.getAsyncRemote().sendText(message)); // TODO Zaktualizowana lista burz, zamiast message
 			}
 		} else if (session.getQueryString().equals("server")) {
 			List<StormDto> storms = objectMapper.readValue(message, new TypeReference<List<StormDto>>() {
 			});
 			storms.forEach(stormDto -> stormController.updatePosition(stormDto));
-			clientSessions.forEach(clientSession -> {
+
+			Set<Session> sessions = Collections.synchronizedSet(new HashSet<>());
+			sessions.addAll(clientSessions);
+			sessions.addAll(webSessions);
+
+			sessions.forEach(clientSession -> {
 				try {
 					clientSession.getAsyncRemote().sendText(objectMapper.writeValueAsString(storms));
 				} catch (JsonProcessingException e) {
