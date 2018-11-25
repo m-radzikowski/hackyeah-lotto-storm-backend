@@ -31,12 +31,16 @@ public class StormController {
     }
 
     public void updatePosition(StormDto stormDto) {
-        allStorms.get(stormDto.getId()).setLng(stormDto.getLng());
-        allStorms.get(stormDto.getId()).setLat(stormDto.getLat());
+        if (allStorms.containsKey(stormDto.getId()) && stormDto.getLng() != null && stormDto.getLat() != null) {
+            allStorms.get(stormDto.getId()).setLng(stormDto.getLng());
+            allStorms.get(stormDto.getId()).setLat(stormDto.getLat());
+        }
     }
 
     public void updateCurrent(StormDto stormDto) {
-        allStorms.get(stormDto.getId()).setCurrent(stormDto.getCurrent());
+        if (allStorms.containsKey(stormDto.getId())) {
+            allStorms.get(stormDto.getId()).setCurrent(stormDto.getCurrent());
+        }
     }
 
     public void remove(String id) {

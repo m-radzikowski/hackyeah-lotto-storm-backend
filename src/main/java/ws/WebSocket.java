@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import controller.StormController;
+import friend.FriendNotifications;
 import model.dto.CommandDto;
 import model.dto.LotteryTicketDto;
 import model.dto.StormDto;
 import model.dto.WinnerDto;
+import wallet.WalletBean;
 
 import javax.ejb.Singleton;
 import javax.inject.Inject;
@@ -22,22 +24,26 @@ import java.util.stream.Collectors;
 public class WebSocket {
     private Set<Session> clientSessions = Collections.synchronizedSet(new HashSet<>());
     private Set<Session> serverSessions = Collections.synchronizedSet(new HashSet<>());
+    private Set<Session> webSessions = Collections.synchronizedSet(new HashSet<>());
     private ObjectMapper objectMapper = new ObjectMapper();
     @Inject
     private StormController stormController;
-//    @Resource
-//    private ManagedScheduledExecutorService scheduledExecutorService;
+    @Inject
+    private WalletBean walletBean;
+    @Inject
+    private FriendNotifications friendNotifications;
 
     @OnOpen
     public void open(Session session) throws JsonProcessingException {
         if (session.getQueryString().equals("client")) {
             clientSessions.add(session);
-        } else {
+        } else if (session.getQueryString().equals("server")){
             serverSessions.add(session);
-            List<StormDto> storms = stormController.generate(1);
+            List<StormDto> storms = stormController.generate(5);
             List<CommandDto> commands = storms.stream().map(storm -> new CommandDto(storm.getId(), CommandDto.Type.CREATE)).collect(Collectors.toList());
             session.getAsyncRemote().sendText(objectMapper.writeValueAsString(commands));
-//            scheduledExecutorService.scheduleAtFixedRate(this::send, 0, 5, TimeUnit.SECONDS);
+        } else if (session.getQueryString().equals("web")) {
+            webSessions.add(session);
         }
     }
 
@@ -45,8 +51,10 @@ public class WebSocket {
     public void close(Session session) {
         if (session.getQueryString().equals("client")) {
             clientSessions.remove(session);
-        } else {
+        } else if (session.getQueryString().equals("server")) {
             serverSessions.remove(session);
+        } else if (session.getQueryString().equals("web")) {
+            webSessions.remove(session);
         }
     }
 
@@ -63,13 +71,22 @@ public class WebSocket {
             stormController.updateCurrent(stormDto);
             if (stormDto.getCurrent().equals(stormDto.getMax())) {
                 session.getAsyncRemote().sendText(objectMapper.writeValueAsString(new WinnerDto(lotteryTicketDto, stormDto)));
-                stormController.remove(stormDto.getId());
                 List<StormDto> storms = stormController.generate(1);
                 List<CommandDto> commands = storms.stream().map(storm -> new CommandDto(storm.getId(), CommandDto.Type.CREATE)).collect(Collectors.toList());
                 commands.add(new CommandDto(stormDto.getId(), CommandDto.Type.REMOVE));
-                session.getAsyncRemote().sendText(objectMapper.writeValueAsString(commands));
+                serverSessions.forEach(serverSession -> {
+                    try {
+                        serverSession.getAsyncRemote().sendText(objectMapper.writeValueAsString(commands));
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                });
+                stormController.remove(stormDto.getId());
             }
-        } else {
+            walletBean.spend1(lotteryTicketDto.getUserId());
+            friendNotifications.benefitFriendIfAny(lotteryTicketDto.getUserId());
+            webSessions.forEach(webSession -> webSession.getAsyncRemote().sendText(message));
+        } else if (session.getQueryString().equals("server")) {
             List<StormDto> storms = objectMapper.readValue(message, new TypeReference<List<StormDto>>(){});
             storms.forEach(stormDto -> stormController.updatePosition(stormDto));
             clientSessions.forEach(clientSession -> {
